@@ -1,0 +1,71 @@
+function drawViz(vizData) {
+  // Get container dimensions (if needed)
+  var height = dscc.getHeight();
+  var width = dscc.getWidth();
+  console.log(vizData);
+  
+  // Get the default data table
+  var data = vizData.tables.DEFAULT;
+  
+  // Find indices of the relevant columns
+  var dealStageIndex = data.columns.findIndex(function(c) {
+    return c.name === 'Deal Stage';
+  });
+  var dateEnteredIndex = data.columns.findIndex(function(c) {
+    return c.name === 'Date Entered Deal Stage';
+  });
+  var dateExitedIndex = data.columns.findIndex(function(c) {
+    return c.name === 'Date Exited Deal Stage';
+  });
+  
+  // If any column isn't found, assume default ordering (0, 1, 2)
+  if (dealStageIndex === -1) dealStageIndex = 0;
+  if (dateEnteredIndex === -1) dateEnteredIndex = 1;
+  if (dateExitedIndex === -1) dateExitedIndex = 2;
+  
+  // Create an object to hold counts for each deal stage
+  var counts = {};
+  data.rows.forEach(function(row) {
+    // Get the deal stage value
+    var stage = row[dealStageIndex].v;
+    if (!counts[stage]) {
+      counts[stage] = { entered: 0, exited: 0 };
+    }
+    
+    // Count if there's a non-null value for Date Entered Deal Stage
+    var dateEntered = row[dateEnteredIndex].v;
+    if (dateEntered) {
+      counts[stage].entered++;
+    }
+    
+    // Count if there's a non-null value for Date Exited Deal Stage
+    var dateExited = row[dateExitedIndex].v;
+    if (dateExited) {
+      counts[stage].exited++;
+    }
+  });
+  
+  // Build an HTML table to display the results
+  var html = '<table style="width: ' + width + 'px; border-collapse: collapse;">';
+  html += '<tr style="background-color: #eee;">';
+  html += '<th style="padding: 4px; text-align: left;">Deal Stage</th>';
+  html += '<th style="padding: 4px; text-align: right;">Entered</th>';
+  html += '<th style="padding: 4px; text-align: right;">Exited</th>';
+  html += '</tr>';
+  
+  for (var stage in counts) {
+    html += '<tr>';
+    html += '<td style="padding: 4px;">' + stage + '</td>';
+    html += '<td style="padding: 4px; text-align: right;">' + counts[stage].entered + '</td>';
+    html += '<td style="padding: 4px; text-align: right;">' + counts[stage].exited + '</td>';
+    html += '</tr>';
+  }
+  
+  html += '</table>';
+  
+  // Render the visualization by replacing the document's body content.
+  // (In a real viz you might want to append to a specific container.)
+  document.body.innerHTML = html;
+}
+
+dscc.subscribeToData(drawViz, {transform: dscc.objectTransform});
